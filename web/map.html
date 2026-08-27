@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drill map — Git</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1520; --panel:#131e2c; --raise:#1a2836; --line:#22344a;
+  --ink:#e8eef5; --dim:#8298ae; --faint:#566b80;
+  --gap:#f2635f; --mid:#f0a842; --solid:#52c9a0; --link:#4db8d8;
+  --sans:'Chivo',system-ui,sans-serif;
+  --serif:'Newsreader',Georgia,serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --e:cubic-bezier(.2,.8,.3,1);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;
+  line-height:1.5;-webkit-font-smoothing:antialiased;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:44px 44px;background-position:-1px -1px;background-attachment:fixed}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 0%,transparent,var(--bg) 72%);pointer-events:none;z-index:0}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:none}
+:focus-visible{outline:2px solid var(--link);outline-offset:3px;border-radius:3px}
+
+.shell{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:22px 20px 60px}
+
+/* ---- top bar ---- */
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.title{display:flex;align-items:baseline;gap:9px}
+.title h1{margin:0;font-size:17px;font-weight:900;letter-spacing:-.02em}
+.title span{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.readout{margin-left:auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.big{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.big b{font-family:var(--sans);font-size:22px;font-weight:900;color:var(--ink);letter-spacing:-.02em}
+.jump{background:var(--link);color:#08131c;font-weight:700;font-size:13px;padding:9px 16px;
+  border-radius:8px;display:flex;align-items:center;gap:8px;transition:transform .16s var(--e),filter .16s}
+.jump:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.jump:active{transform:translateY(1px)}
+.jump kbd{font-family:var(--mono);font-size:9px;opacity:.65;background:rgba(0,0,0,.22);padding:2px 5px;border-radius:3px}
+
+/* ---- filter chips ---- */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:6px 11px;border-radius:99px;
+  border:1px solid var(--line);color:var(--dim);display:flex;align-items:center;gap:7px;
+  transition:border-color .16s,color .16s,background .16s}
+.chip:hover{border-color:var(--dim);color:var(--ink)}
+.chip.on{background:var(--raise);border-color:var(--link);color:var(--ink)}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--faint);display:block}
+.chip.c0 i{background:var(--gap)} .chip.c1 i{background:var(--mid)}
+.chip.c2 i{background:var(--solid)} .chip.cu i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--faint)}
+.chip b{font-weight:600;color:var(--ink)}
+
+/* ---- the graph ---- */
+.graph{background:rgba(19,30,44,.72);border:1px solid var(--line);border-radius:14px;
+  padding:6px 4px;backdrop-filter:blur(3px);margin-bottom:20px}
+.lane{display:grid;grid-template-columns:minmax(0,152px) 1fr auto;align-items:center;gap:14px;
+  padding:9px 16px;border-radius:9px;transition:background .16s}
+.lane:hover{background:rgba(255,255,255,.022)}
+.lane.mute{opacity:.34}
+.lname{display:flex;align-items:baseline;gap:8px;min-width:0}
+.lname .k{font-family:var(--mono);font-size:10px;color:var(--link);font-weight:600;flex:none}
+.lname .t{font-size:13px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  cursor:pointer;transition:color .16s}
+.lane:hover .lname .t{color:var(--ink)}
+
+.track{position:relative;display:flex;align-items:center;gap:0;min-height:26px;flex-wrap:wrap}
+.track::before{content:'';position:absolute;left:9px;right:9px;top:50%;height:1.5px;
+  background:var(--line);transform:translateY(-50%)}
+.node{position:relative;width:26px;height:26px;display:grid;place-items:center;flex:none;
+  transition:transform .18s var(--e)}
+.node::after{content:'';width:12px;height:12px;border-radius:50%;background:var(--bg);
+  box-shadow:inset 0 0 0 1.5px var(--faint);
+  transition:background .3s var(--e),box-shadow .3s var(--e),width .18s var(--e),height .18s var(--e)}
+.node[data-s="0"]::after{background:var(--gap);box-shadow:0 0 0 1.5px var(--gap),0 0 11px -1px var(--gap)}
+.node[data-s="1"]::after{background:var(--mid);box-shadow:0 0 0 1.5px var(--mid),0 0 11px -1px var(--mid)}
+.node[data-s="2"]::after{background:var(--solid);box-shadow:0 0 0 1.5px var(--solid),0 0 11px -1px var(--solid)}
+.node:hover{transform:scale(1.28)}
+.node.sel::after{width:16px;height:16px}
+.node.sel{transform:scale(1.15)}
+.node.sel::before{content:'';position:absolute;inset:0;border-radius:50%;
+  box-shadow:0 0 0 1.5px var(--link);animation:ping 1.7s var(--e) infinite}
+@keyframes ping{0%{transform:scale(.7);opacity:1}100%{transform:scale(1.35);opacity:0}}
+.node.dim{opacity:.16;pointer-events:none}
+.node[data-s="-1"]:not(.dim)::after{animation:breathe 3.4s ease-in-out infinite}
+@keyframes breathe{0%,100%{box-shadow:inset 0 0 0 1.5px var(--faint)}50%{box-shadow:inset 0 0 0 1.5px var(--dim)}}
+
+.ring{width:30px;height:30px;flex:none;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:2.5}
+.ring .bgc{stroke:var(--line)}
+.ring .fg{stroke:var(--solid);transition:stroke-dasharray .55s var(--e)}
+.lpct{font-family:var(--mono);font-size:9px;fill:var(--dim)}
+
+/* ---- inspector ---- */
+.insp{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  animation:slide .3s var(--e)}
+@keyframes slide{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+.ihead{padding:19px 22px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.iid{font-family:var(--mono);font-size:11px;font-weight:600;color:#08131c;background:var(--link);
+  padding:3px 8px;border-radius:5px}
+.isec{font-family:var(--mono);font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em}
+.inav{margin-left:auto;display:flex;gap:4px}
+.inav button{font-family:var(--mono);font-size:11px;color:var(--dim);padding:5px 9px;border-radius:6px;
+  border:1px solid var(--line)}
+.inav button:hover{color:var(--ink);border-color:var(--dim)}
+.icap{margin:14px 22px 0;font-size:21px;line-height:1.32;font-weight:700;letter-spacing:-.02em}
+
+.iact{padding:18px 22px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.show{border:1.5px dashed var(--line);border-radius:9px;padding:11px 18px;font-size:13.5px;
+  font-weight:700;color:var(--dim);transition:border-color .16s,color .16s,background .16s}
+.show:hover{border-color:var(--link);color:var(--ink);background:rgba(77,184,216,.07)}
+.show kbd{font-family:var(--mono);font-size:9px;font-weight:400;opacity:.6;margin-left:7px}
+.marks{display:flex;gap:6px;margin-left:auto}
+.mk{border:1.5px solid;border-radius:9px;padding:9px 14px;font-size:12.5px;font-weight:700;
+  display:flex;align-items:center;gap:7px;transition:transform .15s var(--e),background .15s}
+.mk:hover{transform:translateY(-2px)}
+.mk kbd{font-family:var(--mono);font-size:9px;font-weight:400;opacity:.55}
+.mk.m0{color:var(--gap);border-color:rgba(242,99,95,.4)}   .mk.m0:hover,.mk.m0.on{background:rgba(242,99,95,.17)}
+.mk.m1{color:var(--mid);border-color:rgba(240,168,66,.4)}  .mk.m1:hover,.mk.m1.on{background:rgba(240,168,66,.17)}
+.mk.m2{color:var(--solid);border-color:rgba(82,201,160,.4)}.mk.m2:hover,.mk.m2.on{background:rgba(82,201,160,.17)}
+.mk.on{box-shadow:inset 0 0 0 1px currentColor}
+
+.ans{padding:0 22px 22px;font-family:var(--serif);font-size:16px;line-height:1.66;color:#dbe5ee;
+  max-height:min(52vh,540px);overflow-y:auto;animation:slide .3s var(--e)}
+.ans::-webkit-scrollbar{width:9px}
+.ans::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px}
+
+.blank{padding:52px 22px;text-align:center;color:var(--faint)}
+.blank p{font-family:var(--mono);font-size:12px;margin:0}
+
+/* markdown */
+.ans h4{font-family:var(--sans);font-size:14px;font-weight:700;margin:19px 0 8px;color:var(--ink)}
+.ans p{margin:12px 0} .ans ul,.ans ol{margin:12px 0;padding-left:20px} .ans li{margin:6px 0}
+.ans li::marker{color:var(--link)} .ans strong{color:#fff;font-weight:600}
+.ans code{font-family:var(--mono);font-size:.83em;background:#0a1219;color:var(--link);
+  border:1px solid var(--line);border-radius:4px;padding:.08em .34em}
+.ans pre{background:#0a1219;border:1px solid var(--line);border-radius:9px;padding:14px 16px;
+  overflow-x:auto;margin:14px 0;font-size:12.5px;line-height:1.6}
+.ans pre code{background:none;border:none;padding:0;color:#cfe0ec;font-size:inherit}
+.ans blockquote{margin:14px 0;padding:2px 0 2px 15px;border-left:2px solid var(--link);color:var(--dim)}
+.ans table{border-collapse:collapse;width:100%;margin:14px 0;font-family:var(--sans);font-size:13px}
+.ans th,.ans td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+.ans th{background:#0a1219;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+.ans hr{border:none;border-top:1px solid var(--line);margin:18px 0}
+.ans a{color:var(--link)}
+
+.foot{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+.foot button{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--line);
+  padding:7px 12px;border-radius:7px}
+.foot button:hover{color:var(--ink);border-color:var(--dim)}
+
+@media (max-width:720px){
+  .lane{grid-template-columns:1fr;gap:7px;padding:12px 14px}
+  .ring{display:none}
+  .icap{font-size:18px}
+  .marks{margin-left:0;width:100%}
+  .mk{flex:1;justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="bar">
+    <div class="title"><h1>Drill map</h1><span>git \u00b7 76 nodes</span></div>
+    <div class="readout">
+      <span class="big" id="stat"></span>
+      <button class="jump" id="jump">Take me somewhere <kbd>J</kbd></button>
+    </div>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="graph" id="graph"></div>
+  <div id="insp"></div>
+  <div class="foot">
+    <button id="exp">Export scores</button>
+    <button id="imp">Import</button>
+    <button id="clr">Reset all</button>
+  </div>
+</div>
+
+<script type="application/json" id="data">{"domain": "Git", "sections": [{"num": 1, "title": "Setup & configuration", "items": [{"id": "1.1", "capability": "Configure user, email, editor, and default branch name", "title": "Configure user, email, editor, default branch", "answer": "```bash\ngit config --global user.name \"Jahid\"\ngit config --global user.email \"you@example.com\"\ngit config --global core.editor \"vim\"\ngit config --global init.defaultBranch main\n```\n\nWorth knowing: `user.email` is what links commits to a GitHub account. A mismatch means commits show as unattributed. For work vs personal, use `includeIf` in `~/.gitconfig` to switch identity by directory:\n\n```\n[includeIf \"gitdir:~/work/\"]\n  path = ~/.gitconfig-work\n```"}, {"id": "1.2", "capability": "Understand config scopes: system vs global vs local", "title": "Config scopes", "answer": "Three levels, narrowest wins: `--system` (all users, `/etc/gitconfig`), `--global` (your user, `~/.gitconfig`), `--local` (this repo, `.git/config`). There's also `--worktree`. Check where a value came from with `git config --list --show-origin`, which is the fastest way to answer \"why is this repo using the wrong email\"."}, {"id": "1.3", "capability": "Set up and use aliases", "title": "Aliases", "answer": "```bash\ngit config --global alias.lg \"log --oneline --graph --decorate --all\"\ngit config --global alias.st \"status -sb\"\n```\n\nShell commands need a `!` prefix: `alias.cleanup = '!git branch --merged | grep -v main | xargs git branch -d'`."}, {"id": "1.4", "capability": "Configure SSH key auth and know how to rotate a key", "title": "SSH key auth and rotation", "answer": "Generate with `ssh-keygen -t ed25519 -C \"label\"`, add the public key to the host, test with `ssh -T git@github.com`. Rotation: generate the new key, add it, verify it works, *then* remove the old one from the host. Keys live in `~/.ssh`; the private key must be `600`. Multiple keys are handled in `~/.ssh/config` with `Host` blocks and `IdentityFile`."}, {"id": "1.5", "capability": "Sign commits with GPG or SSH, and verify a signature", "title": "Signed commits", "answer": "`git config --global commit.gpgsign true` plus a signing key. SSH signing is now simpler than GPG: `gpg.format = ssh` and `user.signingkey` pointing at your public key. Verify with `git log --show-signature`. The point is provenance — proving a commit came from who it claims to, which matters because the author field is trivially forgeable."}, {"id": "1.6", "capability": "Write a `.gitignore` that actually works (and know why an already-tracked file keeps showing up)", "title": "`.gitignore`, and why an already-tracked file keeps appearing", "answer": "`.gitignore` only affects *untracked* files. Once a file is tracked, ignoring it does nothing. Fix:\n\n```bash\ngit rm --cached path/to/file\n```\n\nthen commit. `--cached` removes it from the index but leaves it on disk. Use `git check-ignore -v \u003cpath>` to find which rule (or which file) is matching. Note precedence: repo `.gitignore`, then `.git/info/exclude` for local-only ignores, then the global ignore file."}, {"id": "1.7", "capability": "Use `.gitattributes` for line endings, diff drivers, or LFS", "title": "`.gitattributes`", "answer": "Controls per-path behaviour. Most common use is line endings: `* text=auto` normalises to LF in the repo. Also marks binaries (`*.png binary`) so Git doesn't try to diff them, sets custom diff drivers, marks generated files with `linguist-generated`, and configures `merge=ours` for files like changelogs. Unlike `.gitignore`, it's committed and applies to everyone, which is the point."}, {"id": "1.8", "capability": "Set up Git LFS and know when it's warranted", "title": "Git LFS", "answer": "Replaces large files with pointer files, storing the real content on a separate server. Warranted for binaries that change often — design assets, ML models, media. Not warranted for large files that never change (the delta cost is low anyway) and it adds a hard dependency: without the LFS client, a clone gives you pointer text instead of files. Track with `git lfs track \"*.psd\"`, which writes to `.gitattributes`."}]}, {"num": 2, "title": "Core workflow", "items": [{"id": "2.1", "capability": "Explain working directory vs index vs HEAD without hand-waving", "title": "Working directory vs index vs HEAD", "answer": "- **Working directory** — the files on disk, what you're editing.\n- **Index (staging area)** — a snapshot you're building for the next commit. `git add` copies from working directory to index.\n- **HEAD** — a pointer to the commit at the tip of the current branch; the last committed state.\n\n`git diff` compares working directory to index. `git diff --staged` compares index to HEAD. `git status` describes both gaps. The index existing as a separate layer is what makes partial staging possible."}, {"id": "2.2", "capability": "Stage selectively with `add -p`", "title": "`git add -p`", "answer": "Interactively stage individual hunks. Prompts per hunk: `y` stage, `n` skip, `s` split into smaller hunks, `e` edit the hunk manually, `q` quit. Use it to split unrelated changes in one file into separate commits. `git add -p` is the single highest-value habit for producing reviewable commits."}, {"id": "2.3", "capability": "Unstage without losing work", "title": "Unstage without losing work", "answer": "```bash\ngit restore --staged \u003cfile>    # modern\ngit reset HEAD \u003cfile>          # older equivalent\n```\n\nBoth move the change back to unstaged; the file on disk is untouched. Note `git restore \u003cfile>` *without* `--staged` discards working-directory changes — different and destructive."}, {"id": "2.4", "capability": "Write a clear commit message, and explain what makes one good", "title": "A good commit message", "answer": "Subject line under ~50 chars, imperative mood (\"Add retry to webhook handler\", not \"Added\" or \"Adds\"), blank line, then a body explaining *why*. The diff already shows what changed; the message exists to explain the reasoning that isn't recoverable from the code. Reference the issue. A commit should be one logical change — if the message needs \"and\", it's probably two commits."}, {"id": "2.5", "capability": "Amend the last commit (message and content)", "title": "Amend", "answer": "```bash\ngit commit --amend                    # edit message and/or include staged changes\ngit commit --amend --no-edit          # keep message, just add staged changes\n```\n\nAmend creates a *new* commit and discards the old one, so never amend something already pushed to a shared branch without understanding the force-push consequence."}, {"id": "2.6", "capability": "Understand what `.git/` contains at a high level", "title": "What `.git/` contains", "answer": "`objects/` (all content, as blobs/trees/commits/tags), `refs/` (branch and tag pointers), `HEAD` (pointer to current ref), `index` (the staging area, a binary file), `config` (local config), `logs/` (the reflog), `hooks/`. Deleting `.git/` turns the repo into a plain directory — everything Git knows lives there."}, {"id": "2.7", "capability": "Explain the object model: blob, tree, commit, tag", "title": "The object model", "answer": "Four types, all content-addressed by SHA:\n- **Blob** — file contents. No name, no metadata.\n- **Tree** — a directory listing: names, modes, and pointers to blobs and other trees.\n- **Commit** — a pointer to one tree (the full snapshot), plus parent commit(s), author, committer, message.\n- **Tag** — an annotated tag object pointing at a commit, with its own message and signature.\n\nKey insight: Git stores **snapshots, not diffs**. Diffs are computed on demand. Identical content anywhere in history is stored once, because the SHA is the same. Inspect with `git cat-file -p \u003csha>`."}]}, {"num": 3, "title": "Branching", "items": [{"id": "3.1", "capability": "Create, switch, rename, and delete branches", "title": "Create, switch, rename, delete", "answer": "```bash\ngit switch -c feature      # create and switch\ngit switch main            # switch\ngit branch -m old new      # rename\ngit branch -d feature      # delete (safe: refuses if unmerged)\ngit branch -D feature      # force delete\n```\n\n`-d` refusing on unmerged work is a feature, not an obstacle."}, {"id": "3.2", "capability": "Understand `switch`/`restore` vs the older `checkout`", "title": "`switch`/`restore` vs `checkout`", "answer": "`git checkout` was overloaded — it changed branches *and* discarded file changes, which meant a typo could destroy work. Git 2.23 split it: `switch` for branches, `restore` for files. `checkout` still works and you'll see it everywhere, but the split is clearer and safer."}, {"id": "3.3", "capability": "Track a remote branch and set upstream", "title": "Track a remote branch", "answer": "```bash\ngit push -u origin feature       # push and set upstream\ngit branch -u origin/feature     # set upstream for existing branch\n```\n\nUpstream is what makes bare `git push` and `git pull` work, and what lets `git status` say \"ahead by 2 commits\"."}, {"id": "3.4", "capability": "List merged vs unmerged branches and prune stale ones", "title": "Merged vs unmerged, and pruning", "answer": "```bash\ngit branch --merged main       # safe to delete\ngit branch --no-merged main\ngit fetch --prune              # remove local refs to deleted remote branches\n```\n\n`--merged` is relative to the branch you name — check against the right base. Note it reports false negatives for squash-merged branches, since the commits technically never merged."}, {"id": "3.5", "capability": "Explain a branching strategy (trunk-based, GitFlow, release branches) and pick one for a given team", "title": "Branching strategies", "answer": "- **Trunk-based** — short-lived branches (hours to a day), merge to main constantly, feature flags hide incomplete work. Requires good CI and test coverage. Best fit for continuous delivery.\n- **GitFlow** — develop/release/hotfix/feature branches. Heavy. Designed for versioned software with supported releases, not for services deploying multiple times a day.\n- **Release branches** — trunk plus a branch cut per release for stabilisation and backports.\n\nChoosing: the question is release model, not team size. If you deploy continuously, trunk-based; GitFlow's overhead buys you nothing and its long-lived branches actively fight integration. If you ship versioned artifacts customers install and you support old versions, release branches earn their cost."}, {"id": "3.6", "capability": "Recognise a detached HEAD and get out of it safely", "title": "Detached HEAD", "answer": "HEAD points at a commit rather than a branch — happens when you check out a SHA or tag. Commits made here belong to no branch and will eventually be garbage collected. Recover with:\n\n```bash\ngit switch -c rescue-branch   # keep the work\ngit switch main               # discard it\n```\n\nIf you already left and lost the SHA, `git reflog` has it."}, {"id": "3.7", "capability": "Create and push tags; explain lightweight vs annotated", "title": "Tags: lightweight vs annotated", "answer": "```bash\ngit tag v1.0.0                        # lightweight: just a pointer\ngit tag -a v1.0.0 -m \"Release 1.0.0\"  # annotated: a real object\ngit push origin v1.0.0                # tags aren't pushed by default\n```\n\nAnnotated tags store tagger, date, message, and can be signed — use them for releases. Lightweight tags are fine as private bookmarks. Tags are meant to be immutable; moving a published tag breaks everyone who fetched it."}]}, {"num": 4, "title": "Merging & rebasing", "items": [{"id": "4.1", "capability": "Merge a branch and read the resulting history", "title": "Merge and read the result", "answer": "`git merge feature` while on the target branch. A merge commit has two parents. `git log --graph --oneline` shows the topology. `git log --first-parent` follows only the mainline, which is often what you actually want on a busy repo."}, {"id": "4.2", "capability": "Explain fast-forward vs no-ff merge and when to force each", "title": "Fast-forward vs no-ff", "answer": "If the target branch hasn't moved since the feature branched, Git just moves the pointer forward — no merge commit, linear history. `--no-ff` forces a merge commit anyway, which preserves the fact that a branch existed and groups its commits.\n\nForce fast-forward (`--ff-only`) when you want strictly linear history and want the merge to fail if a rebase is needed. Force `--no-ff` when the branch boundary is meaningful — it makes the whole feature revertable as one commit, which is a real operational advantage."}, {"id": "4.3", "capability": "Rebase a feature branch onto an updated main", "title": "Rebase onto updated main", "answer": "```bash\ngit switch feature\ngit fetch origin\ngit rebase origin/main\n```\n\nReplays each of your commits on top of the new base, creating new commits with new SHAs. Result is linear history with no merge commit. If conflicts occur, resolve, `git add`, `git rebase --continue`."}, {"id": "4.4", "capability": "Interactive rebase: squash, fixup, reword, reorder, drop", "title": "Interactive rebase", "answer": "```bash\ngit rebase -i HEAD~5\n```\n\nOpens an editor listing commits oldest-first. Actions: `pick` (keep), `reword` (change message), `edit` (stop to amend), `squash` (merge into previous, combine messages), `fixup` (merge into previous, discard message), `drop` (delete), and reorder by moving lines. `--autosquash` with commits made as `git commit --fixup=\u003csha>` automates the common case."}, {"id": "4.5", "capability": "Explain the golden rule of rebasing (and when it's safe to break it)", "title": "The golden rule of rebasing", "answer": "Don't rebase commits that others have based work on. Rebasing rewrites SHAs; anyone who pulled the old commits now has divergent history and gets a mess on their next pull.\n\nWhen it's safe to break it: your own feature branch that nobody else is using, even if it's pushed — force-push with lease and carry on. Also fine if the whole team agrees and coordinates, though that's rarely worth it. The rule is really about *shared* branches, not *pushed* branches."}, {"id": "4.6", "capability": "Argue rebase vs merge for a 20-person team, with tradeoffs", "title": "Rebase vs merge for a 20-person team", "answer": "The case for rebase/squash-merge: linear history, easy to read, `git bisect` works cleanly, each PR is one commit on main. The case for merge: preserves true history, no rewriting, no force-pushes, keeps the individual commits of a large change.\n\nA defensible position for that team size: rebase or squash *feature branches before merging*, but never rebase main. Squash-merge for small PRs; merge commits for large features where the individual commits carry real information. The important part is that it's enforced in branch protection rather than left to preference, because mixed strategies produce the worst of both."}, {"id": "4.7", "capability": "Use `rerere` to stop re-solving the same conflict", "title": "`rerere`", "answer": "\"Reuse recorded resolution.\" `git config --global rerere.enabled true`. Git records how you resolved a conflict and replays it automatically next time the same conflict appears. Valuable during long rebases and repeated merges of a long-lived branch. It's silently helpful, which is also its risk — it can apply a stale resolution, so review the result."}, {"id": "4.8", "capability": "Squash-merge vs merge commit — know what each does to history and to `git bisect`", "title": "Squash-merge vs merge commit, and bisect", "answer": "Squash-merge collapses a PR into one commit on main. History is clean, but the individual commits are gone and the branch's relationship to main is lost — which is why `git branch --merged` won't list it.\n\nFor `git bisect`: squash-merge is actually *better*. Each commit on main is a complete, tested change, so bisect lands on a meaningful unit. With merge commits, bisect can land on an intermediate commit from inside a feature branch that never built on its own. `git bisect --first-parent` mitigates that."}]}, {"num": 5, "title": "Conflict resolution", "items": [{"id": "5.1", "capability": "Read conflict markers and understand which side is which", "title": "Reading conflict markers", "answer": "```\n\u003c\u003c\u003c\u003c\u003c\u003c\u003c HEAD\nyour version\n=======\ntheir version\n>>>>>>> feature-branch\n```\n\nTop is the current branch (HEAD), bottom is what's being merged in. `git config merge.conflictStyle zdiff3` adds a third section showing the common ancestor, which usually makes the intent obvious and is worth enabling permanently."}, {"id": "5.2", "capability": "Resolve a conflict during merge", "title": "Resolve during merge", "answer": "Edit the file, remove all markers, `git add \u003cfile>` to mark resolved, then `git commit`. `git status` lists unmerged paths. `git diff` during a conflict shows a combined diff against both parents."}, {"id": "5.3", "capability": "Resolve a conflict during rebase (and know why the sides feel inverted)", "title": "Resolve during rebase, and inverted sides", "answer": "Same mechanics, but \"ours\" and \"theirs\" feel backwards. During a rebase, Git is replaying *your* commits onto the base branch — so at each step, \"ours\" is the base branch (the thing being replayed onto) and \"theirs\" is your commit. This trips people up constantly. Then `git add` and `git rebase --continue`."}, {"id": "5.4", "capability": "Abort cleanly mid-merge or mid-rebase", "title": "Abort cleanly", "answer": "```bash\ngit merge --abort\ngit rebase --abort\ngit cherry-pick --abort\n```\n\nReturns to the state before you started. Safe, and the right instinct when a merge turns out to be much larger than expected."}, {"id": "5.5", "capability": "Use `checkout --ours` / `--theirs` deliberately", "title": "`--ours` / `--theirs`", "answer": "```bash\ngit checkout --ours \u003cfile>     # take current branch's version wholesale\ngit checkout --theirs \u003cfile>   # take incoming version wholesale\n```\n\nUse deliberately for files where merging line by line is meaningless — lockfiles, generated output, binary assets. Remember the inversion during rebase (5.3)."}, {"id": "5.6", "capability": "Use a merge tool or 3-way diff view", "title": "Merge tools", "answer": "`git mergetool` launches a configured three-way diff (vimdiff, meld, VS Code, Beyond Compare). The three-way view — base, ours, theirs — is far more informative than the inline markers because you can see what each side actually changed relative to the ancestor."}, {"id": "5.7", "capability": "Resolve a conflict in a lockfile or generated file (regenerate, don't hand-merge)", "title": "Lockfiles and generated files", "answer": "Don't hand-merge. Take one side, then regenerate:\n\n```bash\ngit checkout --theirs package-lock.json\nnpm install    # regenerate from package.json\ngit add package-lock.json\n```\n\nHand-merging a lockfile produces a file that's internally inconsistent and will fail in ways that are painful to debug. The same applies to any generated artifact — resolve the source, regenerate the output."}]}, {"num": 6, "title": "Undo & recovery", "items": [{"id": "6.1", "capability": "Explain `reset --soft` vs `--mixed` vs `--hard` precisely", "title": "`reset --soft` vs `--mixed` vs `--hard`", "answer": "All three move the branch pointer to the target commit. They differ in what else they touch:\n\n| Mode | Branch pointer | Index | Working directory |\n|---|---|---|---|\n| `--soft` | moved | unchanged | unchanged |\n| `--mixed` (default) | moved | reset | unchanged |\n| `--hard` | moved | reset | **overwritten** |\n\nSo `--soft HEAD~1` undoes the commit but leaves everything staged, ready to recommit. `--mixed HEAD~1` leaves changes unstaged. `--hard HEAD~1` destroys the changes. `--hard` is the only one that loses work."}, {"id": "6.2", "capability": "Revert a commit on a shared branch and explain why revert, not reset", "title": "Revert on a shared branch", "answer": "```bash\ngit revert \u003csha>\n```\n\nCreates a *new* commit that undoes the change. History is preserved and nothing is rewritten, so collaborators are unaffected. Reset rewrites history, which on a shared branch means everyone else's next pull produces divergence and confusion. Rule: reset for local, revert for published.\n\nReverting a merge commit needs `-m 1` to specify which parent is the mainline. Note the follow-on trap: after reverting a merge, re-merging that branch won't reintroduce the changes, because Git considers them already merged. You have to revert the revert."}, {"id": "6.3", "capability": "Recover a lost commit or branch via reflog", "title": "Recover via reflog", "answer": "```bash\ngit reflog\ngit switch -c recovered \u003csha>    # or git reset --hard \u003csha>\n```\n\nThe reflog records every position HEAD has held — commits, resets, rebases, checkouts — for around 90 days by default. It's local-only and it's why almost nothing in Git is truly lost. This is the first thing to reach for after any \"I've destroyed everything\" moment."}, {"id": "6.4", "capability": "Recover a deleted file from an earlier commit", "title": "Recover a deleted file from an earlier commit", "answer": "```bash\ngit restore --source=\u003csha> -- path/to/file\ngit checkout \u003csha> -- path/to/file      # older syntax\n```\n\nTo find when it was deleted: `git log --diff-filter=D -- path/to/file`."}, {"id": "6.5", "capability": "Recover uncommitted work after a bad `reset --hard` (and know when you can't)", "title": "Recover after `reset --hard`", "answer": "If the work was **committed**, reflog has it (6.3). If it was **staged but not committed**, the blobs are still in the object database:\n\n```bash\ngit fsck --lost-found\n```\n\nwhich surfaces dangling blobs you can inspect with `git cat-file -p`. If it was **never staged**, it's gone — Git never saw it. That's the honest answer, and it's the argument for committing early and often, even if messily, since you can always tidy history later."}, {"id": "6.6", "capability": "Undo a bad rebase using `ORIG_HEAD` or reflog", "title": "Undo a bad rebase", "answer": "```bash\ngit reset --hard ORIG_HEAD\n```\n\nGit sets `ORIG_HEAD` before dangerous operations. If that's been overwritten, find the pre-rebase commit in `git reflog` and reset to it."}, {"id": "6.7", "capability": "Remove a secret from history and understand the blast radius", "title": "Remove a secret from history", "answer": "Order matters: **rotate the secret first**. History rewriting doesn't help if the secret was ever pushed — assume it's compromised the moment it left your machine. Then clean:\n\n```bash\ngit filter-repo --path secrets.env --invert-paths\n```\n\nBlast radius: every commit after the touched one gets a new SHA, so everyone must re-clone or hard reset. Open PRs break. Forks keep the old objects. GitHub retains unreferenced commits accessible by SHA until support purges them. Tags need re-pointing. This is why rotation is the real fix and rewriting is cosmetic cleanup."}, {"id": "6.8", "capability": "Clean untracked files safely (`clean -n` before `-fd`)", "title": "Clean untracked files safely", "answer": "```bash\ngit clean -n -d      # dry run — ALWAYS do this first\ngit clean -fd        # then actually delete\n```\n\n`-x` also removes ignored files, which will delete `node_modules`, `.env`, and build output. `git clean` is unrecoverable — these files were never in Git, so there's no reflog to save you."}]}, {"num": 7, "title": "Inspection & investigation", "items": [{"id": "7.1", "capability": "Use `log` with useful flags: `--oneline`, `--graph`, `--since`, `-S`", "title": "Useful `log` flags", "answer": "```bash\ngit log --oneline --graph --decorate --all   # topology at a glance\ngit log --since=\"2 weeks ago\"\ngit log --author=\"jahid\"\ngit log -S \"functionName\"                    # commits where the count of this string changed\ngit log -G \"regex\"                           # commits whose diff matches the regex\ngit log -p -- path/to/file                   # patches for one file\ngit log --stat                               # files changed per commit\n```\n\n`-S` (the \"pickaxe\") is the one people don't know and it's excellent for \"when was this introduced\"."}, {"id": "7.2", "capability": "Diff working tree vs index vs a given commit", "title": "Diff scopes", "answer": "```bash\ngit diff                    # working directory vs index\ngit diff --staged           # index vs HEAD\ngit diff HEAD               # working directory vs HEAD\ngit diff main..feature      # tip to tip\ngit diff main...feature     # feature vs their common ancestor\n```\n\nThe three-dot form is what code review shows — changes *on* the branch, excluding changes main made independently."}, {"id": "7.3", "capability": "Use `blame` to trace a line's origin", "title": "`blame`", "answer": "```bash\ngit blame path/to/file\ngit blame -L 40,60 file           # limit to a line range\ngit blame -w -C file              # ignore whitespace, detect moved code\n```\n\n`-w -C` matters because a reformat commit otherwise makes every line blame to the person who ran the formatter. `--ignore-rev` and `.git-blame-ignore-revs` let you permanently exclude formatting commits."}, {"id": "7.4", "capability": "Use `bisect` to find a breaking commit", "title": "`bisect`", "answer": "```bash\ngit bisect start\ngit bisect bad                 # current commit is broken\ngit bisect good v1.2.0         # this one was fine\n# test, then mark each commit:\ngit bisect good | git bisect bad\ngit bisect reset               # when done\n```\n\nBinary search across history — 1000 commits takes about 10 tests. The main requirement is a reliable way to test each commit."}, {"id": "7.5", "capability": "Automate bisect with a test script (`bisect run`)", "title": "Automated bisect", "answer": "```bash\ngit bisect run ./test-script.sh\n```\n\nScript exits 0 for good, non-zero for bad, 125 to skip an untestable commit. Fully automatic. This turns bisect from a tedious manual process into something you start and walk away from, and it's the version worth mentioning in an interview."}, {"id": "7.6", "capability": "Search history for when a string was added or removed", "title": "Search history for a string", "answer": "`git log -S \"string\"` finds commits where the number of occurrences changed — i.e. where it was added or removed. `git log -G \"regex\"` finds commits whose diff text matches. Add `--all` to search every branch, and `-p` to see the actual change."}, {"id": "7.7", "capability": "Show a file's full history including renames (`log --follow`)", "title": "File history through renames", "answer": "```bash\ngit log --follow -- path/to/file\n```\n\nGit doesn't record renames; it infers them by content similarity. `--follow` enables that inference, which is why file history looks truncated without it."}, {"id": "7.8", "capability": "Inspect an arbitrary object with `cat-file` / `show`", "title": "Inspect arbitrary objects", "answer": "```bash\ngit cat-file -t \u003csha>    # type\ngit cat-file -p \u003csha>    # pretty-print contents\ngit rev-parse HEAD       # resolve a ref to a SHA\ngit show \u003csha>           # commit with its diff\ngit ls-tree HEAD         # tree contents\n```\n\nUseful for understanding the object model concretely, and occasionally for recovering things."}]}, {"num": 8, "title": "Remotes & collaboration", "items": [{"id": "8.1", "capability": "Add, rename, and inspect remotes", "title": "Manage remotes", "answer": "```bash\ngit remote -v\ngit remote add upstream git@github.com:org/repo.git\ngit remote rename origin old-origin\ngit remote set-url origin \u003cnew-url>\n```"}, {"id": "8.2", "capability": "Explain `fetch` vs `pull`, and why `fetch` first is usually right", "title": "`fetch` vs `pull`", "answer": "`fetch` downloads remote refs and objects but doesn't touch your working branch. `pull` is `fetch` plus an immediate `merge` (or `rebase`). Fetch-first is usually right because it lets you inspect what arrived — `git log HEAD..origin/main` — before deciding how to integrate it. `pull` on a branch with local commits is where surprise merge commits come from."}, {"id": "8.3", "capability": "Configure `pull.rebase` and explain the choice", "title": "`pull.rebase`", "answer": "```bash\ngit config --global pull.rebase true\n```\n\nMakes `git pull` rebase your local commits on top of the fetched ones instead of merging. Produces linear history and avoids the noise of \"Merge branch 'main' of ...\" commits. The tradeoff is that it rewrites your local commits, so a conflict mid-pull is a rebase conflict. Setting `pull.ff only` is a defensible alternative: pull fails if a merge or rebase is needed, forcing you to decide explicitly."}, {"id": "8.4", "capability": "Force-push safely with `--force-with-lease`, and explain the difference from `--force`", "title": "`--force-with-lease`", "answer": "```bash\ngit push --force-with-lease\n```\n\n`--force` overwrites the remote branch unconditionally, including commits a colleague pushed while you were working. `--force-with-lease` checks that the remote is still where you last saw it and refuses if someone else pushed. It's the difference between \"overwrite\" and \"overwrite if nothing changed underneath me\". Always use the lease version. Note that a background `git fetch` (some IDEs do this) can update your remote-tracking ref and undermine the check — `--force-with-lease=\u003cref>:\u003csha>` is the paranoid form."}, {"id": "8.5", "capability": "Recover a branch after someone else force-pushed over your work", "title": "Recover after someone force-pushed over your work", "answer": "Your commits still exist locally. `git reflog` to find your pre-fetch position, or `origin/branch@{1}` in the reflog for the remote-tracking ref. Create a branch from that SHA, then rebase or cherry-pick onto the new remote state. If it's only on the remote, the pushed-but-orphaned commits may still be retrievable by SHA from the hosting provider's API."}, {"id": "8.6", "capability": "Clone shallow / partial for large repos, and know the tradeoffs", "title": "Shallow and partial clone", "answer": "```bash\ngit clone --depth 1 \u003curl>                 # shallow: only recent history\ngit clone --filter=blob:none \u003curl>        # partial: blobs fetched on demand\ngit clone --single-branch --branch main \u003curl>\n```\n\nShallow is standard in CI where history isn't needed — much faster, less disk. Tradeoffs: `git log` is truncated, `bisect` and `blame` are limited, and some operations trigger a fetch anyway. Partial clone (`blob:none`) is usually the better choice for large repos you'll actually work in, since history is intact and file contents arrive lazily. Deepen later with `git fetch --unshallow`."}, {"id": "8.7", "capability": "Work with a fork: add upstream, sync, push to your own remote", "title": "Fork workflow", "answer": "```bash\ngit clone git@github.com:you/repo.git\ngit remote add upstream git@github.com:org/repo.git\ngit fetch upstream\ngit rebase upstream/main       # or merge\ngit push origin feature\n```\n\n`origin` is your fork, `upstream` is the source. Keep your fork's main clean and unmodified — branch for every change — so syncing stays trivial."}]}, {"num": 9, "title": "Stash & housekeeping", "items": [{"id": "9.1", "capability": "Stash and reapply work", "title": "Stash and reapply", "answer": "```bash\ngit stash\ngit stash pop\n```\n\nSaves modified tracked files and reverts the working directory to HEAD. Stashes are stored as commits in `refs/stash`."}, {"id": "9.2", "capability": "Stash with a message and apply a specific stash", "title": "Named and specific stashes", "answer": "```bash\ngit stash push -m \"wip: retry logic\"\ngit stash list\ngit stash apply stash@{2}\ngit stash show -p stash@{0}     # see the contents\n```\n\nMessage your stashes. `git stash list` showing five entries of \"WIP on main\" is useless."}, {"id": "9.3", "capability": "Stash including untracked files", "title": "Include untracked files", "answer": "```bash\ngit stash -u        # include untracked\ngit stash -a        # include ignored too\n```\n\nPlain `git stash` leaves untracked files in place, which surprises people — you switch branches and the new files are still sitting there."}, {"id": "9.4", "capability": "Explain `apply` vs `pop` and when the difference bites", "title": "`apply` vs `pop`", "answer": "`pop` applies and deletes the stash; `apply` applies and keeps it. The difference bites when applying to the wrong branch: with `pop`, if the apply conflicts, the stash *is* kept — but if it applies cleanly onto the wrong branch, it's gone from the list and you have to recover it from the reflog. `apply` is safer when you're unsure; delete explicitly with `git stash drop` once you've confirmed."}, {"id": "9.5", "capability": "Understand `gc`, loose vs packed objects, repo size", "title": "`gc`, loose vs packed objects, repo size", "answer": "New objects are written individually (\"loose\"). `git gc` packs them into packfiles with delta compression and prunes unreachable objects past the reflog expiry. Runs automatically on a threshold. `git count-objects -vH` shows the breakdown. Repos bloat from committed binaries and large files — and because history is permanent, deleting the file later doesn't shrink the repo. That's what LFS and `filter-repo` address."}, {"id": "9.6", "capability": "Use worktrees to work on two branches at once", "title": "Worktrees", "answer": "```bash\ngit worktree add ../hotfix main\ngit worktree list\ngit worktree remove ../hotfix\n```\n\nMultiple working directories from one repository, each on a different branch, sharing the object database. Much better than stashing when you need to jump to a hotfix mid-feature — no stash, no rebuild of dependencies, both checkouts remain intact. The same branch can't be checked out in two worktrees at once."}]}, {"num": 10, "title": "Advanced / situational", "items": [{"id": "10.1", "capability": "Cherry-pick a commit, and a range of commits", "title": "Cherry-pick", "answer": "```bash\ngit cherry-pick \u003csha>\ngit cherry-pick \u003csha1>^..\u003csha2>     # a range\ngit cherry-pick -n \u003csha>            # apply without committing\n```\n\nApplies a commit's *changes* as a new commit with a new SHA. Legitimate for backporting a fix to a release branch. Overused as a substitute for proper merging, which leads to duplicated commits and confusing history — if you're cherry-picking regularly between the same two branches, the branching strategy is wrong."}, {"id": "10.2", "capability": "Resolve a cherry-pick conflict and know when to abort", "title": "Cherry-pick conflicts", "answer": "Resolve, `git add`, `git cherry-pick --continue`. Abort with `--abort`. Conflicts here usually signal the target branch has diverged enough that the commit doesn't apply cleanly — at that point, consider whether a proper merge or a fresh fix for that branch is more honest than forcing it through."}, {"id": "10.3", "capability": "Use submodules: add, clone with, update, and explain the pain", "title": "Submodules", "answer": "```bash\ngit submodule add \u003curl> path\ngit clone --recurse-submodules \u003curl>\ngit submodule update --init --recursive\n```\n\nA submodule pins a specific commit of another repo. The pain: clones don't include them by default (people get empty directories), updates are a two-step commit dance, detached HEAD inside the submodule is the default state, and branch switching doesn't update submodule contents automatically. They work, but they demand discipline the whole team has to share."}, {"id": "10.4", "capability": "Use subtree as an alternative, and know when it's better", "title": "Subtree", "answer": "```bash\ngit subtree add --prefix=lib/thing \u003curl> main --squash\ngit subtree pull --prefix=lib/thing \u003curl> main --squash\n```\n\nVendors the other repo's content directly into yours. Better than submodules when consumers shouldn't have to know: a plain clone just works, no extra commands, no detached HEAD. Worse when you frequently push changes back upstream, and it inflates repo size. Rule of thumb: subtree for consuming, submodule for tight bidirectional development."}, {"id": "10.5", "capability": "Write a client-side hook (pre-commit, commit-msg)", "title": "Client-side hooks", "answer": "Scripts in `.git/hooks/`, executable, named for the event. `pre-commit` (lint, format, block secrets — exit non-zero to abort), `commit-msg` (validate message format), `pre-push` (run tests). They're local and not committed, so they can't be relied on for enforcement — and `--no-verify` skips them."}, {"id": "10.6", "capability": "Set up pre-commit framework hooks across a team", "title": "Pre-commit framework across a team", "answer": "`.pre-commit-config.yaml` in the repo defines hooks and versions; each developer runs `pre-commit install` once. Solves the distribution problem that raw `.git/hooks` has. Still bypassable with `--no-verify`, so the same checks must also run in CI — hooks are a fast-feedback convenience, not a control."}, {"id": "10.7", "capability": "Explain what a server-side hook can enforce that a client-side one can't", "title": "Server-side hooks", "answer": "Run on the remote, so they can't be bypassed by the client. `pre-receive` can reject a push outright — enforce commit signing, message format, file size limits, or block direct pushes to main. That's the enforcement a client-side hook can never provide. On managed platforms you don't get raw server hooks; the equivalents are branch protection rules, required status checks, and push rulesets."}, {"id": "10.8", "capability": "Enforce conventional commits and drive a changelog from them", "title": "Conventional commits and changelogs", "answer": "Format: `type(scope): description` — `feat`, `fix`, `chore`, `docs`, `refactor`, with `BREAKING CHANGE:` in the footer. Enforce with commitlint in a `commit-msg` hook plus a CI check. Tools like semantic-release then derive the version bump (feat → minor, fix → patch, breaking → major) and generate the changelog automatically. The value is machine-readable history; the cost is friction, so it's worth it mainly where you publish versioned artifacts."}, {"id": "10.9", "capability": "Use `filter-repo` (not `filter-branch`) for history rewriting", "title": "`filter-repo`, not `filter-branch`", "answer": "`git filter-branch` is officially discouraged: extremely slow, and its default behaviour is subtly unsafe in ways that produce corrupted results. `git-filter-repo` is the recommended replacement — orders of magnitude faster, safer defaults, and it forces a fresh clone so you can't half-rewrite a repo in place. Use it for removing files, purging secrets, splitting a repo, or rewriting author details."}, {"id": "10.10", "capability": "Explain how Git stores history efficiently (packfiles, deltas)", "title": "How Git stores history efficiently", "answer": "Content-addressed storage means identical content is stored once regardless of how many commits or branches reference it. Objects start loose, then `gc` packs them into packfiles using delta compression — storing similar objects as deltas against each other, chosen heuristically by size and name similarity rather than by commit order. Packfiles are further zlib-compressed. This is why a repo with long history can be surprisingly small, and why a few committed binaries (which don't delta well) can make it surprisingly large."}]}]}</script>
+<script>
+(function(){
+'use strict';
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const KEY = 'drill-map-v1';
+const ALL = DATA.sections.flatMap(s => s.items.map(i => ({...i, sec:s.num, secName:s.title})));
+const IDX = Object.fromEntries(ALL.map((it,n) => [it.id, n]));
+
+let scores = {}, sel = null, shown = false, filter = 'all';
+try{ scores = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){}
+const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(scores)); }catch(e){} };
+const sc = id => id in scores ? scores[id] : -1;
+
+/* ---------- markdown ---------- */
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function inline(t){
+  return esc(t).replace(/`([^`]+)`/g,(m,c)=>'<code>'+c+'</code>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+function md(src){
+  const B=[];
+  src = src.replace(/```(\w*)\n([\s\S]*?)```/g,(m,l,c)=>{
+    B.push('<pre><code>'+esc(c.replace(/\n$/,''))+'</code></pre>'); return '\u0000'+(B.length-1)+'\u0000'; });
+  const out=[], L=src.split('\n'); let i=0;
+  const ul=/^\s*[-*]\s+/, ol=/^\s*\d+\.\s+/;
+  while(i<L.length){
+    const ln=L[i];
+    if(/^\u0000\d+\u0000$/.test(ln.trim())){ out.push(B[+ln.trim().replace(/\u0000/g,'')]); i++; continue; }
+    if(!ln.trim()){ i++; continue; }
+    if(/^#{1,6}\s/.test(ln)){ out.push('<h4>'+inline(ln.replace(/^#+\s*/,''))+'</h4>'); i++; continue; }
+    if(/^(---+|\*\*\*+)$/.test(ln.trim())){ out.push('<hr>'); i++; continue; }
+    if(ln.trim().startsWith('|') && L[i+1] && /^\s*\|[\s:|-]+\|\s*$/.test(L[i+1])){
+      const cl=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+      let h='<table><thead><tr>'+cl(ln).map(c=>'<th>'+inline(c)+'</th>').join('')+'</tr></thead><tbody>';
+      i+=2;
+      while(i<L.length && L[i].trim().startsWith('|')){ h+='<tr>'+cl(L[i]).map(c=>'<td>'+inline(c)+'</td>').join('')+'</tr>'; i++; }
+      out.push(h+'</tbody></table>'); continue;
+    }
+    if(/^>\s?/.test(ln)){ const b=[];
+      while(i<L.length && /^>\s?/.test(L[i])){ b.push(L[i].replace(/^>\s?/,'')); i++; }
+      out.push('<blockquote>'+md(b.join('\n'))+'</blockquote>'); continue; }
+    if(ul.test(ln)||ol.test(ln)){
+      const ord=ol.test(ln)&&!ul.test(ln), re=ord?ol:ul; let h=ord?'<ol>':'<ul>';
+      while(i<L.length && re.test(L[i])){
+        let t=L[i].replace(re,''); i++;
+        while(i<L.length && L[i].trim() && !ul.test(L[i]) && !ol.test(L[i])
+              && !L[i].trim().startsWith('|') && !/^#{1,6}\s/.test(L[i])){ t+=' '+L[i].trim(); i++; }
+        h+='<li>'+inline(t)+'</li>'; }
+      out.push(h+(ord?'</ol>':'</ul>')); continue; }
+    const b=[];
+    while(i<L.length && L[i].trim() && !/^[-*>#|]/.test(L[i].trim())
+          && !/^\u0000/.test(L[i].trim()) && !ol.test(L[i])){ b.push(L[i].trim()); i++; }
+    if(b.length) out.push('<p>'+inline(b.join(' '))+'</p>'); else { out.push('<p>'+inline(L[i])+'</p>'); i++; }
+  }
+  return out.join('');
+}
+
+/* ---------- filters ---------- */
+const match = it => {
+  const s = sc(it.id);
+  return filter==='all' || (filter==='u' ? s===-1 : filter==='w' ? (s===0||s===1) : String(s)===filter);
+};
+
+/* ---------- render ---------- */
+function chips(){
+  const n = {all:ALL.length,u:0,0:0,1:0,2:0,w:0};
+  ALL.forEach(it=>{ const s=sc(it.id); s===-1?n.u++:(n[s]++, s<2&&n.w++); });
+  const defs = [['all','Everything',''],['u','Untouched','cu'],['0','Gaps','c0'],
+                ['1','Shaky','c1'],['2','Solid','c2'],['w','Needs work','']];
+  document.getElementById('chips').innerHTML = defs.map(([k,l,c])=>
+    `<button class="chip ${c} ${filter===k?'on':''}" data-f="${k}"><i></i>${l} <b>${n[k]}</b></button>`).join('');
+  const pts = ALL.reduce((a,it)=>a+Math.max(0,sc(it.id)),0);
+  document.getElementById('stat').innerHTML =
+    `<b>${Math.round(pts/(ALL.length*2)*100)}%</b> mapped \u00b7 ${n.u} untouched`;
+}
+
+function graph(){
+  document.getElementById('graph').innerHTML = DATA.sections.map(s=>{
+    const solid = s.items.filter(i=>sc(i.id)===2).length;
+    const frac = solid/s.items.length, C = 2*Math.PI*12;
+    const anyMatch = s.items.some(match);
+    return `<div class="lane ${anyMatch?'':'mute'}">
+      <div class="lname"><span class="k">${String(s.num).padStart(2,'0')}</span>
+        <span class="t" data-lane="${s.num}" title="Jump to first unscored in this section">${esc(s.title)}</span></div>
+      <div class="track">
+        ${s.items.map(i=>`<button class="node ${sel===i.id?'sel':''} ${match(i)?'':'dim'}"
+           data-n="${i.id}" data-s="${sc(i.id)}"
+           title="${i.id} \u2014 ${esc(i.capability).replace(/"/g,'&quot;')}"
+           aria-label="${i.id}"></button>`).join('')}
+      </div>
+      <svg class="ring" viewBox="0 0 30 30"><circle class="bgc" cx="15" cy="15" r="12"></circle>
+        <circle class="fg" cx="15" cy="15" r="12" stroke-dasharray="${(frac*C).toFixed(1)} ${C}"></circle></svg>
+    </div>`;
+  }).join('');
+}
+
+const MK = [['m0','No idea','1'],['m1','Roughly','2'],['m2','Nailed it','3']];
+function inspector(){
+  const box = document.getElementById('insp');
+  if(!sel){
+    box.innerHTML = `<div class="insp"><div class="blank">
+      <p>Pick a node \u2014 or hit <b>J</b> and let it choose.</p></div></div>`;
+    return;
+  }
+  const it = ALL[IDX[sel]], s = sc(sel);
+  box.innerHTML = `<div class="insp">
+    <div class="ihead">
+      <span class="iid">${it.id}</span>
+      <span class="isec">${esc(it.secName)}</span>
+      <div class="inav">
+        <button data-step="-1" title="Previous">\u2190</button>
+        <button data-step="1" title="Next">\u2192</button>
+      </div>
+    </div>
+    <h2 class="icap">${esc(it.capability)}</h2>
+    <div class="iact">
+      ${shown ? '' : `<button class="show" id="show">Show the answer<kbd>SPACE</kbd></button>`}
+      <div class="marks">
+        ${MK.map(([c,l,k],v)=>`<button class="mk ${c} ${s===v?'on':''}" data-m="${v}">${l}<kbd>${k}</kbd></button>`).join('')}
+      </div>
+    </div>
+    ${shown ? `<div class="ans">${md(it.answer)}</div>` : ''}
+  </div>`;
+}
+
+const draw = () => { chips(); graph(); inspector(); };
+
+/* ---------- actions ---------- */
+function pick(id, keepShown){
+  sel = id; shown = !!keepShown; draw();
+  const n = document.querySelector(`[data-n="${CSS.escape(id)}"]`);
+  if(n) n.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function step(d){
+  if(!sel) return;
+  const list = ALL.filter(match);
+  if(!list.length) return;
+  let k = list.findIndex(i=>i.id===sel);
+  if(k === -1) k = 0; else k = (k + d + list.length) % list.length;
+  pick(list[k].id);
+}
+function jump(){
+  const rank = it => { const s = sc(it.id); return s===-1?0 : s===0?1 : s===1?2 : 3; };
+  const pool = ALL.filter(i=>i.id!==sel);
+  const best = Math.min(...pool.map(rank));
+  const tier = pool.filter(i=>rank(i)===best);
+  pick(tier[Math.random()*tier.length|0].id);
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e=>{
+  const n = e.target.closest('[data-n]'); if(n){ pick(n.dataset.n); return; }
+  const f = e.target.closest('[data-f]'); if(f){ filter = f.dataset.f; draw(); return; }
+  const l = e.target.closest('[data-lane]');
+  if(l){
+    const s = DATA.sections.find(x=>x.num===+l.dataset.lane);
+    pick((s.items.find(i=>sc(i.id)===-1) || s.items[0]).id); return;
+  }
+  const m = e.target.closest('[data-m]');
+  if(m){
+    const v = +m.dataset.m;
+    if(scores[sel] === v) delete scores[sel]; else scores[sel] = v;
+    save(); draw(); return;
+  }
+  const st = e.target.closest('[data-step]'); if(st){ step(+st.dataset.step); return; }
+  if(e.target.closest('#show')){ shown = true; inspector(); return; }
+  if(e.target.closest('#jump')){ jump(); return; }
+  if(e.target.closest('#exp')){
+    const b = new Blob([JSON.stringify({saved:new Date().toISOString(),scores},null,2)],{type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+    a.download = 'drill-scores.json'; a.click(); URL.revokeObjectURL(a.href); return;
+  }
+  if(e.target.closest('#imp')){
+    const inp = document.createElement('input'); inp.type='file'; inp.accept='.json';
+    inp.onchange = ()=>{ const fr = new FileReader();
+      fr.onload = ()=>{ try{ const d = JSON.parse(fr.result); scores = d.scores || d; save(); draw(); }
+        catch(err){ alert('That file could not be read as saved scores.'); } };
+      fr.readAsText(inp.files[0]); }; inp.click(); return;
+  }
+  if(e.target.closest('#clr')){
+    if(confirm('Clear every score? This cannot be undone.')){ scores = {}; save(); draw(); }
+  }
+});
+
+document.addEventListener('keydown', e=>{
+  if(e.target.matches('input,textarea')) return;
+  const k = e.key.toLowerCase();
+  if(k === 'j'){ e.preventDefault(); jump(); return; }
+  if(!sel) return;
+  if(e.key === ' '){ e.preventDefault(); shown = !shown; inspector(); return; }
+  if(['1','2','3'].includes(e.key)){
+    e.preventDefault(); const v = +e.key - 1;
+    if(scores[sel] === v) delete scores[sel]; else scores[sel] = v;
+    save(); draw(); return;
+  }
+  if(e.key === 'ArrowRight'){ e.preventDefault(); step(1); }
+  if(e.key === 'ArrowLeft'){ e.preventDefault(); step(-1); }
+  if(e.key === 'Escape'){ sel = null; shown = false; draw(); }
+});
+
+draw();
+})();
+</script>
+</body>
+</html>
