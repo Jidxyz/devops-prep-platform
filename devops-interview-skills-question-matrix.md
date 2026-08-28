@@ -16,129 +16,205 @@ Score honestly. A 1 on anything you'd hit in a live exercise is a gap, not a pas
 
 ## 1. Setup & configuration
 
-| # | Capability | Score | Notes |
+| # | Question | Score | Notes |
 |---|---|---|---|
-| 1.1 | Configure user, email, editor, and default branch name | | |
-| 1.2 | Understand config scopes: system vs global vs local | | |
-| 1.3 | Set up and use aliases | | |
-| 1.4 | Configure SSH key auth and know how to rotate a key | | |
-| 1.5 | Sign commits with GPG or SSH, and verify a signature | | |
-| 1.6 | Write a `.gitignore` that actually works (and know why an already-tracked file keeps showing up) | | |
-| 1.7 | Use `.gitattributes` for line endings, diff drivers, or LFS | | |
-| 1.8 | Set up Git LFS and know when it's warranted | | |
+| 1.1 | How would you configure Git user name, email, editor, and default branch on a new machine? | | |
+| 1.2 | If commits from a repo are showing the wrong author or default branch, how would you diagnose and fix the Git config? | | |
+| 1.3 | How would you explain Git config scopes: system, global, local, and worktree? | | |
+| 1.4 | When a repository is using an unexpected Git setting, how would you find which config file is winning? | | |
+| 1.5 | How would you create useful Git aliases for everyday work? | | |
+| 1.6 | What makes a Git alias helpful, and when would you use a shell alias with the `!` prefix? | | |
+| 1.7 | How would you set up SSH authentication for GitHub or another Git host? | | |
+| 1.8 | How would you rotate a Git SSH key without locking yourself or a team out? | | |
+| 1.9 | How would you sign Git commits with GPG or SSH and verify the signature? | | |
+| 1.10 | Why do signed commits matter if Git already records an author name and email? | | |
+| 1.11 | How would you write a `.gitignore` rule and confirm it is working? | | |
+| 1.12 | Why does a file keep appearing in Git after you added it to `.gitignore`, and how would you fix it? | | |
+| 1.13 | How would you use `.gitattributes` for line endings, binary files, diff drivers, or LFS? | | |
+| 1.14 | When should a rule live in `.gitattributes` instead of `.gitignore`? | | |
+| 1.15 | How would you set up Git LFS for large binary assets? | | |
+| 1.16 | When is Git LFS worth using, and what tradeoffs does it introduce for clones and contributors? | | |
 
 ## 2. Core workflow
 
-| # | Capability | Score | Notes |
+| # | Question | Score | Notes |
 |---|---|---|---|
-| 2.1 | Explain working directory vs index vs HEAD without hand-waving | | |
-| 2.2 | Stage selectively with `add -p` | | |
-| 2.3 | Unstage without losing work | | |
-| 2.4 | Write a clear commit message, and explain what makes one good | | |
-| 2.5 | Amend the last commit (message and content) | | |
-| 2.6 | Understand what `.git/` contains at a high level | | |
-| 2.7 | Explain the object model: blob, tree, commit, tag | | |
+| 2.1 | How would you explain the working directory, index, and HEAD in Git? | | |
+| 2.2 | Which Git diff commands would you use to prove what is unstaged, staged, and committed? | | |
+| 2.3 | How would you use `git add -p` to stage only part of a file? | | |
+| 2.4 | Why is partial staging useful when preparing clean commits for review? | | |
+| 2.5 | How would you unstage a file without losing your local changes? | | |
+| 2.6 | What is the difference between `git restore --staged <file>` and `git restore <file>`? | | |
+| 2.7 | What makes a Git commit message clear and useful? | | |
+| 2.8 | How would you decide whether one set of changes should be one commit or several commits? | | |
+| 2.9 | How would you amend the last commit message or add staged changes to it? | | |
+| 2.10 | Why can amending a pushed commit cause problems for other people? | | |
+| 2.11 | How would you explain what lives inside the `.git/` directory? | | |
+| 2.12 | What would happen if someone deleted `.git/`, and why? | | |
+| 2.13 | How would you explain Git objects: blob, tree, commit, and tag? | | |
+| 2.14 | How would you inspect a Git object directly and prove that Git stores snapshots, not just diffs? | | |
 
 ## 3. Branching
 
-| # | Capability | Score | Notes |
+| # | Question | Score | Notes |
 |---|---|---|---|
-| 3.1 | Create, switch, rename, and delete branches | | |
-| 3.2 | Understand `switch`/`restore` vs the older `checkout` | | |
-| 3.3 | Track a remote branch and set upstream | | |
-| 3.4 | List merged vs unmerged branches and prune stale ones | | |
-| 3.5 | Explain a branching strategy (trunk-based, GitFlow, release branches) and pick one for a given team | | |
-| 3.6 | Recognise a detached HEAD and get out of it safely | | |
-| 3.7 | Create and push tags; explain lightweight vs annotated | | |
+| 3.1 | How would you create, switch, rename, and delete Git branches? | | |
+| 3.2 | Why does `git branch -d` refuse some deletes, and when would `-D` be appropriate? | | |
+| 3.3 | How would you explain `git switch` and `git restore` compared with older `git checkout` usage? | | |
+| 3.4 | Why did Git split branch switching and file restoration into separate commands? | | |
+| 3.5 | How would you set a local branch to track a remote branch? | | |
+| 3.6 | What does an upstream branch change about `git status`, `git pull`, and `git push`? | | |
+| 3.7 | How would you list merged and unmerged branches and prune stale remote references? | | |
+| 3.8 | What can make `git branch --merged` misleading after squash merges? | | |
+| 3.9 | How would you compare trunk-based development, GitFlow, and release branches? | | |
+| 3.10 | Given a team and release model, how would you choose a branching strategy and defend it? | | |
+| 3.11 | How would you recognise a detached HEAD state? | | |
+| 3.12 | If you made commits while detached, how would you keep or recover that work safely? | | |
+| 3.13 | How would you create and push Git tags? | | |
+| 3.14 | How would you explain lightweight versus annotated tags, and which would you use for releases? | | |
 
 ## 4. Merging & rebasing
 
-| # | Capability | Score | Notes |
+| # | Question | Score | Notes |
 |---|---|---|---|
-| 4.1 | Merge a branch and read the resulting history | | |
-| 4.2 | Explain fast-forward vs no-ff merge and when to force each | | |
-| 4.3 | Rebase a feature branch onto an updated main | | |
-| 4.4 | Interactive rebase: squash, fixup, reword, reorder, drop | | |
-| 4.5 | Explain the golden rule of rebasing (and when it's safe to break it) | | |
-| 4.6 | Argue rebase vs merge for a 20-person team, with tradeoffs | | |
-| 4.7 | Use `rerere` to stop re-solving the same conflict | | |
-| 4.8 | Squash-merge vs merge commit — know what each does to history and to `git bisect` | | |
+| 4.1 | How would you merge a branch and inspect the resulting Git history? | | |
+| 4.2 | What does a merge commit with two parents tell you when reading `git log --graph`? | | |
+| 4.3 | How would you explain fast-forward versus `--no-ff` merges? | | |
+| 4.4 | When would you require `--ff-only`, and when would you deliberately force `--no-ff`? | | |
+| 4.5 | How would you rebase a feature branch onto the latest main branch? | | |
+| 4.6 | What happens to commit SHAs during a rebase, and how do you continue after conflicts? | | |
+| 4.7 | How would you use interactive rebase to squash, fixup, reword, reorder, or drop commits? | | |
+| 4.8 | When would `--autosquash` make an interactive rebase cleaner? | | |
+| 4.9 | What is the golden rule of rebasing? | | |
+| 4.10 | When is it safe to rebase a pushed branch, and what must you do afterwards? | | |
+| 4.11 | How would you argue rebase versus merge for a 20-person engineering team? | | |
+| 4.12 | What branch protection or merge policy would you recommend to avoid mixed-history confusion? | | |
+| 4.13 | How would you enable and use Git `rerere`? | | |
+| 4.14 | What risk should you watch for when Git reuses a recorded conflict resolution? | | |
+| 4.15 | How would you compare squash-merge and merge commits? | | |
+| 4.16 | How do squash merges and merge commits affect `git bisect` and branch history? | | |
 
 ## 5. Conflict resolution
 
-| # | Capability | Score | Notes |
+| # | Question | Score | Notes |
 |---|---|---|---|
-| 5.1 | Read conflict markers and understand which side is which | | |
-| 5.2 | Resolve a conflict during merge | | |
-| 5.3 | Resolve a conflict during rebase (and know why the sides feel inverted) | | |
-| 5.4 | Abort cleanly mid-merge or mid-rebase | | |
-| 5.5 | Use `checkout --ours` / `--theirs` deliberately | | |
-| 5.6 | Use a merge tool or 3-way diff view | | |
-| 5.7 | Resolve a conflict in a lockfile or generated file (regenerate, don't hand-merge) | | |
+| 5.1 | How do you read Git conflict markers and identify each side? | | |
+| 5.2 | How does `merge.conflictStyle zdiff3` help when resolving conflicts? | | |
+| 5.3 | How would you resolve a conflict during a Git merge? | | |
+| 5.4 | Which Git commands show unresolved paths and mark a merge conflict as resolved? | | |
+| 5.5 | How would you resolve a conflict during a Git rebase? | | |
+| 5.6 | Why do `ours` and `theirs` feel inverted during a rebase conflict? | | |
+| 5.7 | How would you abort a merge, rebase, or cherry-pick cleanly? | | |
+| 5.8 | When should you stop and abort instead of continuing through a large conflict? | | |
+| 5.9 | How would you use `checkout --ours` and `checkout --theirs` deliberately? | | |
+| 5.10 | For which files is taking one whole side safer than line-by-line conflict resolution? | | |
+| 5.11 | How would you use a merge tool or three-way diff view? | | |
+| 5.12 | Why is a three-way conflict view more useful than inline conflict markers alone? | | |
+| 5.13 | How would you resolve a conflict in a lockfile or generated file? | | |
+| 5.14 | Why is hand-merging generated output usually the wrong fix? | | |
 
 ## 6. Undo & recovery
 
-| # | Capability | Score | Notes |
+| # | Question | Score | Notes |
 |---|---|---|---|
-| 6.1 | Explain `reset --soft` vs `--mixed` vs `--hard` precisely | | |
-| 6.2 | Revert a commit on a shared branch and explain why revert, not reset | | |
-| 6.3 | Recover a lost commit or branch via reflog | | |
-| 6.4 | Recover a deleted file from an earlier commit | | |
-| 6.5 | Recover uncommitted work after a bad `reset --hard` (and know when you can't) | | |
-| 6.6 | Undo a bad rebase using `ORIG_HEAD` or reflog | | |
-| 6.7 | Remove a secret from history and understand the blast radius | | |
-| 6.8 | Clean untracked files safely (`clean -n` before `-fd`) | | |
+| 6.1 | How would you explain `git reset --soft`, `--mixed`, and `--hard` precisely? | | |
+| 6.2 | Which parts of Git state does each reset mode change: branch pointer, index, and working directory? | | |
+| 6.3 | How would you revert a commit on a shared branch? | | |
+| 6.4 | Why should you use `git revert` instead of `git reset` for published history? | | |
+| 6.5 | How would you recover a lost commit or deleted branch using reflog? | | |
+| 6.6 | Why is the reflog local-only, and what kind of Git mistakes can it recover from? | | |
+| 6.7 | How would you recover a deleted file from an earlier commit? | | |
+| 6.8 | How would you find the commit where a file was deleted before restoring it? | | |
+| 6.9 | How would you recover work after a bad `git reset --hard`? | | |
+| 6.10 | When is uncommitted work unrecoverable, and what does that teach you about staging and committing? | | |
+| 6.11 | How would you undo a bad rebase using `ORIG_HEAD` or reflog? | | |
+| 6.12 | What would you do if `ORIG_HEAD` no longer points to the pre-rebase state? | | |
+| 6.13 | How would you remove a leaked secret from Git history? | | |
+| 6.14 | Why is rotating the secret more important than rewriting Git history? | | |
+| 6.15 | How would you clean untracked files safely? | | |
+| 6.16 | Why should `git clean -n` come before `git clean -fd`, and what extra risk does `-x` add? | | |
 
 ## 7. Inspection & investigation
 
-| # | Capability | Score | Notes |
+| # | Question | Score | Notes |
 |---|---|---|---|
-| 7.1 | Use `log` with useful flags: `--oneline`, `--graph`, `--since`, `-S` | | |
-| 7.2 | Diff working tree vs index vs a given commit | | |
-| 7.3 | Use `blame` to trace a line's origin | | |
-| 7.4 | Use `bisect` to find a breaking commit | | |
-| 7.5 | Automate bisect with a test script (`bisect run`) | | |
-| 7.6 | Search history for when a string was added or removed | | |
-| 7.7 | Show a file's full history including renames (`log --follow`) | | |
-| 7.8 | Inspect an arbitrary object with `cat-file` / `show` | | |
+| 7.1 | How would you use `git log` flags to inspect history effectively? | | |
+| 7.2 | When would you use `git log -S` or `git log -G` instead of a plain log search? | | |
+| 7.3 | How would you diff the working tree, index, HEAD, and another branch? | | |
+| 7.4 | What is the practical difference between two-dot and three-dot Git diffs? | | |
+| 7.5 | How would you use `git blame` to trace where a line came from? | | |
+| 7.6 | How can you avoid misleading blame results after formatting or moved-code commits? | | |
+| 7.7 | How would you use `git bisect` to find the commit that introduced a bug? | | |
+| 7.8 | What makes a good and bad commit useful when starting a bisect session? | | |
+| 7.9 | How would you automate `git bisect` with `bisect run`? | | |
+| 7.10 | What exit codes should a bisect test script return for good, bad, and skipped commits? | | |
+| 7.11 | How would you search Git history for when a string was added or removed? | | |
+| 7.12 | How do `git log -S` and `git log -G` differ when investigating history? | | |
+| 7.13 | How would you show a file history across renames? | | |
+| 7.14 | Why does Git infer renames instead of storing them directly? | | |
+| 7.15 | How would you inspect an arbitrary Git object with `cat-file` or `show`? | | |
+| 7.16 | What commands would you use to identify an object type, print it, and resolve a ref to a SHA? | | |
 
 ## 8. Remotes & collaboration
 
-| # | Capability | Score | Notes |
+| # | Question | Score | Notes |
 |---|---|---|---|
-| 8.1 | Add, rename, and inspect remotes | | |
-| 8.2 | Explain `fetch` vs `pull`, and why `fetch` first is usually right | | |
-| 8.3 | Configure `pull.rebase` and explain the choice | | |
-| 8.4 | Force-push safely with `--force-with-lease`, and explain the difference from `--force` | | |
-| 8.5 | Recover a branch after someone else force-pushed over your work | | |
-| 8.6 | Clone shallow / partial for large repos, and know the tradeoffs | | |
-| 8.7 | Work with a fork: add upstream, sync, push to your own remote | | |
+| 8.1 | How would you add, rename, inspect, or change Git remotes? | | |
+| 8.2 | How would you explain the difference between `origin` and `upstream` in a repo? | | |
+| 8.3 | How would you explain `git fetch` versus `git pull`? | | |
+| 8.4 | Why is fetching first often safer than pulling immediately on a branch with local commits? | | |
+| 8.5 | How would you configure `pull.rebase` and explain the choice? | | |
+| 8.6 | When would `pull.ff only` be a better default than automatic merge or rebase? | | |
+| 8.7 | How would you force-push safely with `--force-with-lease`? | | |
+| 8.8 | How is `--force-with-lease` different from `--force`, and what edge case can weaken it? | | |
+| 8.9 | How would you recover after someone force-pushed over your work? | | |
+| 8.10 | Where would you look locally for the old remote-tracking branch position? | | |
+| 8.11 | How would you clone a large repository shallowly or partially? | | |
+| 8.12 | What tradeoffs do shallow and partial clones create for blame, bisect, log, and later fetches? | | |
+| 8.13 | How would you work with a fork using `origin` and `upstream` remotes? | | |
+| 8.14 | How would you keep your fork synced while keeping feature work isolated? | | |
 
 ## 9. Stash & housekeeping
 
-| # | Capability | Score | Notes |
+| # | Question | Score | Notes |
 |---|---|---|---|
-| 9.1 | Stash and reapply work | | |
-| 9.2 | Stash with a message and apply a specific stash | | |
-| 9.3 | Stash including untracked files | | |
-| 9.4 | Explain `apply` vs `pop` and when the difference bites | | |
-| 9.5 | Understand `gc`, loose vs packed objects, repo size | | |
-| 9.6 | Use worktrees to work on two branches at once | | |
+| 9.1 | How would you stash and reapply local work? | | |
+| 9.2 | What does Git store when you create a stash? | | |
+| 9.3 | How would you create a named stash and apply a specific stash entry? | | |
+| 9.4 | Why are named stashes easier to use than a list of default WIP messages? | | |
+| 9.5 | How would you stash untracked files as well as tracked changes? | | |
+| 9.6 | What is the difference between `git stash -u` and `git stash -a`? | | |
+| 9.7 | How would you explain `git stash apply` versus `git stash pop`? | | |
+| 9.8 | When can `pop` be riskier than `apply`, especially on the wrong branch? | | |
+| 9.9 | How would you explain Git garbage collection, loose objects, packed objects, and repo size? | | |
+| 9.10 | Why can committing large binaries bloat a repo even after the file is deleted later? | | |
+| 9.11 | How would you use Git worktrees to work on two branches at once? | | |
+| 9.12 | Why are worktrees often better than stashing when switching to an urgent hotfix? | | |
 
 ## 10. Advanced / situational
 
-| # | Capability | Score | Notes |
+| # | Question | Score | Notes |
 |---|---|---|---|
-| 10.1 | Cherry-pick a commit, and a range of commits | | |
-| 10.2 | Resolve a cherry-pick conflict and know when to abort | | |
-| 10.3 | Use submodules: add, clone with, update, and explain the pain | | |
-| 10.4 | Use subtree as an alternative, and know when it's better | | |
-| 10.5 | Write a client-side hook (pre-commit, commit-msg) | | |
-| 10.6 | Set up pre-commit framework hooks across a team | | |
-| 10.7 | Explain what a server-side hook can enforce that a client-side one can't | | |
-| 10.8 | Enforce conventional commits and drive a changelog from them | | |
-| 10.9 | Use `filter-repo` (not `filter-branch`) for history rewriting | | |
-| 10.10 | Explain how Git stores history efficiently (packfiles, deltas) | | |
+| 10.1 | How would you cherry-pick one commit or a range of commits? | | |
+| 10.2 | When is cherry-pick a good fit, and when does regular cherry-picking suggest a bad branching strategy? | | |
+| 10.3 | How would you resolve a cherry-pick conflict and continue? | | |
+| 10.4 | When should you abort a cherry-pick instead of forcing the commit through? | | |
+| 10.5 | How would you add, clone, and update Git submodules? | | |
+| 10.6 | Why are Git submodules painful for teams, and what discipline do they require? | | |
+| 10.7 | How would you use Git subtree as an alternative to submodules? | | |
+| 10.8 | When is subtree better than submodules, and what cost does it introduce? | | |
+| 10.9 | How would you write a client-side Git hook such as `pre-commit` or `commit-msg`? | | |
+| 10.10 | Why can client-side hooks help developers but not fully enforce policy? | | |
+| 10.11 | How would you set up the pre-commit framework across a team? | | |
+| 10.12 | Why should the same checks run in CI even if developers use pre-commit locally? | | |
+| 10.13 | How would you explain what server-side hooks can enforce that client-side hooks cannot? | | |
+| 10.14 | How do branch protection rules and required checks replace raw server hooks on hosted Git platforms? | | |
+| 10.15 | How would you enforce conventional commits and generate a changelog from them? | | |
+| 10.16 | When is conventional commit discipline worth the extra friction? | | |
+| 10.17 | How would you use `git filter-repo` for history rewriting? | | |
+| 10.18 | Why is `git filter-repo` preferred over `git filter-branch`? | | |
+| 10.19 | How would you explain how Git stores history efficiently with objects, packfiles, and deltas? | | |
+| 10.20 | Why can Git history stay small for text changes but grow quickly with binary files? | | |
 
 ---
 
@@ -146,17 +222,17 @@ Score honestly. A 1 on anything you'd hit in a live exercise is a gap, not a pas
 
 | Section | Items | Score /2 each | Total | % |
 |---|---|---|---|---|
-| 1. Setup & configuration | 8 | | /16 | |
-| 2. Core workflow | 7 | | /14 | |
-| 3. Branching | 7 | | /14 | |
-| 4. Merging & rebasing | 8 | | /16 | |
-| 5. Conflict resolution | 7 | | /14 | |
-| 6. Undo & recovery | 8 | | /16 | |
-| 7. Inspection & investigation | 8 | | /16 | |
-| 8. Remotes & collaboration | 7 | | /14 | |
-| 9. Stash & housekeeping | 6 | | /12 | |
-| 10. Advanced / situational | 10 | | /20 | |
-| **Total** | **76** | | **/152** | |
+| 1. Setup & configuration | 16 | | /32 | |
+| 2. Core workflow | 14 | | /28 | |
+| 3. Branching | 14 | | /28 | |
+| 4. Merging & rebasing | 16 | | /32 | |
+| 5. Conflict resolution | 14 | | /28 | |
+| 6. Undo & recovery | 16 | | /32 | |
+| 7. Inspection & investigation | 16 | | /32 | |
+| 8. Remotes & collaboration | 14 | | /28 | |
+| 9. Stash & housekeeping | 12 | | /24 | |
+| 10. Advanced / situational | 20 | | /40 | |
+| **Total** | **152** | | **/304** | |
 
 ---
 

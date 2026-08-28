@@ -4,13 +4,13 @@ Three self-contained HTML tools over the same matrix data. Each is a single file
 with the questions and answers embedded — **no server, no build step, no
 dependencies.** Download and open in a browser.
 
-Currently loaded with **Git (76 items)** as a working scope. The other fourteen
+Currently loaded with **Git (152 items)** as a working scope. The other fourteen
 domains are structured for but not yet wired in.
 
 | File | Model | Use it when |
 |---|---|---|
 | [`focus.html`](./focus.html) | One card at a time, in finite sessions | You have ten minutes and no willpower |
-| [`map.html`](./map.html) | All 76 items as an explorable branch graph | You want to see where you're weak and pick |
+| [`map.html`](./map.html) | All 152 items as an explorable branch graph | You want to see where you're weak and pick |
 | [`checklist.html`](./checklist.html) | Scored list with expandable answers | Doing a deliberate scoring pass, or reading |
 
 ## Shared behaviour

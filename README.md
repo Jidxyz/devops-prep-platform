@@ -3,7 +3,7 @@
 A self-assessment capability matrix for senior platform and DevOps engineering
 interviews, with a full answer key for every item.
 
-**1629 capabilities across 15 domains.** Every matrix item has a corresponding
+**1705 capabilities across 15 domains.** Every matrix item has a corresponding
 answer covering what a strong response includes — the reasoning, the tradeoffs,
 and the failure modes that signal real experience.
 
@@ -26,7 +26,7 @@ ones that read as genuine experience.
 
 | # | Domain | Items | Answer key |
 |---|---|---|---|
-| 1 | Git | 76 | [`01-git.md`](./answer-keys/01-git.md) |
+| 1 | Git | 152 | [`01-git.md`](./answer-keys/01-git.md) |
 | 2 | Linux | 98 | [`02-linux.md`](./answer-keys/02-linux.md) |
 | 3 | Networking | 86 | [`03-networking.md`](./answer-keys/03-networking.md) |
 | 4 | AWS | 166 | [`04-aws.md`](./answer-keys/04-aws.md) |
@@ -41,9 +41,9 @@ ones that read as genuine experience.
 | 13 | GitHub Actions | 88 | [`13-github-actions.md`](./answer-keys/13-github-actions.md) |
 | 14 | Jenkins | 81 | [`14-jenkins.md`](./answer-keys/14-jenkins.md) |
 | 15 | Observability, Performance & Reliability | 145 | [`15-observability.md`](./answer-keys/15-observability.md) |
-| | **Total** | **1629** | |
+| | **Total** | **1705** | |
 
-- [`devops-interview-skills-question-matrix.md`](./devops-interview-skills-question-matrix.md) — the matrix itself: all 1,629 questions with blank score and notes columns, plus a scoring summary per domain.
+- [`devops-interview-skills-question-matrix.md`](./devops-interview-skills-question-matrix.md) — the matrix itself: all 1,705 questions with blank score and notes columns, plus a scoring summary per domain.
 - [`web/`](./web) — three browser-based drill apps over the same data. Single HTML files, no build step. See [`web/README.md`](./web/README.md).
 
 ## Conventions
